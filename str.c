@@ -73,6 +73,8 @@ str newStr(void) {
     s.len = 0;
     s.cap = STR_CAP_DEFAULT;
 
+    *(s.ptr) = '\0';
+
     return s;
 }
 

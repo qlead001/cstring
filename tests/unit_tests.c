@@ -199,5 +199,5 @@ int main(void) {
 
     test_print_results();
 
-    return test_fails;
+    return (test_fails < 255)? test_fails : 255;
 }
