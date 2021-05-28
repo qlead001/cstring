@@ -25,6 +25,29 @@ void append(str* s1, str s2) {
     s1->len = newLen;
 }
 
+// Append string literal s2 to s1
+void appendStr(str* s1, const char* s2) {
+    int s2Len = strlen(s2);
+    int newLen = s1->len + s2Len;
+
+    // Resize string if necessary
+    if (s1->cap < newLen + 1) {
+        int newCap = newLen + 1;
+
+        // Allocate in blocks of STR_CAP_DEFAULT bytes
+        newCap = CALC_CAP(newCap);
+
+        s1->ptr = realloc(s1->ptr, newCap);
+
+        s1->cap = newCap;
+    }
+    
+    // Append s2 to s1 with null terminator
+    memcpy(s1->ptr + s1->len, s2, s2Len + 1);
+
+    s1->len = newLen;
+}
+
 // Return a str from a string literal
 str strFrom(const char* s) {
     int len = strlen(s);

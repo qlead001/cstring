@@ -21,6 +21,7 @@ struct str {
 typedef struct str str;
 
 void append(str* s1, str s2);
+void appendStr(str* s1, const char* s2);
 str strFrom(const char* s);
 str newStr(void);
 void freeStr(str* s);
