@@ -4,20 +4,26 @@
 
 #include "tests.h"
 
-// Helper function to generate a long string of length len
+/* Helper function to generate a long string of length len */
 char* gen_long(int len) {
-    char* long_string = malloc(len * sizeof(char));
     int i;
+
+    char* long_string = malloc(len * sizeof(char));
+
     for (i = 0; i < len-1; i++)
         long_string[i] = ' ' + (i % ('~' - ' ' + 1));
     long_string[len-1] = '\0';
+
     return long_string;
 }
 
 void from_literal_test(void) {
+    str s;
+
     test("From Literal");
 
-    str s = strFrom("test");
+    s = strFrom("test");
+
     if (strcmp("test", STRSTR(s)))
         test_abort("String did not match literal.");
     else
@@ -27,11 +33,14 @@ void from_literal_test(void) {
 }
 
 void from_long_string_test(void) {
-    test("From Long String");
+    str s;
 
     char* long_string = gen_long(257);
 
-    str s = strFrom(long_string);
+    test("From Long String");
+
+    s = strFrom(long_string);
+
     if (strcmp(long_string, STRSTR(s)))
         test_fail("String did not match literal.");
     else
@@ -42,9 +51,11 @@ void from_long_string_test(void) {
 }
 
 void free_test(void) {
+    str s;
+
     test("Free");
 
-    str s = strFrom("test");
+    s = strFrom("test");
     freeStr(&s);
 
     if (STRSTR(s) != NULL)
@@ -58,9 +69,12 @@ void free_test(void) {
 }
 
 void new_test(void) {
+    str s;
+
     test("New");
 
-    str s = newStr();
+    s = newStr();
+
     if (strcmp("", STRSTR(s)))
         test_abort("String did not match empty string.");
     else if (STRLEN(s) != 0)
@@ -74,11 +88,15 @@ void new_test(void) {
 }
 
 void append_inplace_test(void) {
+    str s1;
+    str s2;
+
     test("Append In-Place");
 
-    str s1 = strFrom("test");
-    str s2 = strFrom(" foobar");
+    s1 = strFrom("test");
+    s2 = strFrom(" foobar");
     append(&s1, s2);
+
     if (STRCAP(s1) != STR_CAP_DEFAULT)
         test_fail("Append changed the capacity unnecessarily.");
     else if (strcmp("test foobar", STRSTR(s1)))
@@ -93,15 +111,20 @@ void append_inplace_test(void) {
 }
 
 void append_long_test(void) {
-    test("Append Long");
+    str s1;
+    str s2;
 
     char* long_string = gen_long(STR_CAP_DEFAULT - 4);
     char expected[STR_CAP_DEFAULT + 25] = "test string";
+
+    test("Append Long");
+
     strcat(expected, long_string);
 
-    str s1 = strFrom("test string");
-    str s2 = strFrom(long_string);
+    s1 = strFrom("test string");
+    s2 = strFrom(long_string);
     append(&s1, s2);
+
     if (STRCAP(s1) != STR_CAP_DEFAULT * 2)
         test_fail("Append did not correctly increase capacity.");
     else if (strcmp(expected, STRSTR(s1)))
@@ -117,10 +140,13 @@ void append_long_test(void) {
 }
 
 void append_literal_test(void) {
+    str s1;
+
     test("Append Literal");
 
-    str s1 = strFrom("test");
+    s1 = strFrom("test");
     appendStr(&s1, " foobar");
+
     if (STRCAP(s1) != STR_CAP_DEFAULT)
         test_fail("Append changed the capacity unnecessarily.");
     else if (strcmp("test foobar", STRSTR(s1)))
@@ -132,13 +158,16 @@ void append_literal_test(void) {
 }
 
 void append_literal_long_test(void) {
-    test("Append Literal Long");
+    str s1;
 
     char* long_string = gen_long(STR_CAP_DEFAULT - 4);
     char expected[STR_CAP_DEFAULT + 25] = "test string";
+
+    test("Append Literal Long");
+
     strcat(expected, long_string);
 
-    str s1 = strFrom("test string");
+    s1 = strFrom("test string");
     appendStr(&s1, long_string);
     if (STRCAP(s1) != STR_CAP_DEFAULT * 2)
         test_fail("Append did not correctly increase capacity.");
@@ -154,9 +183,7 @@ void append_literal_long_test(void) {
 #define NUM_TESTS   8
 
 int main(void) {
-    printf("------------------\n");
-    printf("Running unit tests\n");
-    printf("------------------\n");
+    int i;
 
     void (*test_funcs[NUM_TESTS])(void) = {
         from_literal_test, from_long_string_test, free_test, new_test,
@@ -164,7 +191,9 @@ int main(void) {
         append_literal_long_test
     };
 
-    int i;
+    init_tests("unit");
+
+
     for (i = 0; i < NUM_TESTS; i++)
         (*test_funcs[i])();
 
