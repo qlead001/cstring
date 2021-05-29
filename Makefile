@@ -1,7 +1,7 @@
 .PHONY: clean test tests/%.tester
 
 CC = gcc
-CC_FLAGS = -iquote include -ansi -Wall -Wextra -pedantic -Wformat=2 \
+CC_FLAGS = -iquote include -O3 -ansi -Wall -Wextra -pedantic -Wformat=2 \
 		   -W -Wshadow -Wstrict-prototypes -Wold-style-definition
 
 # Get list of tests

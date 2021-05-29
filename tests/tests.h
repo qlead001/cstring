@@ -114,7 +114,7 @@ void test_abort(const char* msg) {
     test_fail(msg);
     test_print_results();
 
-    exit((test_fails < 255)? test_fails : 255);
+    exit((test_fails < 255) ? test_fails : 255);
 }
 
 #endif  /* tests.h */

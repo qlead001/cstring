@@ -180,7 +180,56 @@ void append_literal_long_test(void) {
     free(long_string);
 }
 
-#define NUM_TESTS   8
+void append_to_empty_test(void) {
+    str s1;
+    str s2;
+
+    test("Append To Empty");
+
+    s1 = newStr();
+    s2 = strFrom("new string");
+    append(&s1, s2);
+
+    if (STRCAP(s1) != STR_CAP_DEFAULT)
+        test_fail("Append changed the capacity unnecessarily.");
+    else if (strcmp("new string", STRSTR(s1)))
+        test_fail("Append did not perform correctly.");
+    else if (strcmp("new string", STRSTR(s2)))
+        test_fail("Append made changes to the second string.");
+    else
+        test_pass();
+
+    freeStr(&s1);
+    freeStr(&s2);
+}
+
+void append_free_test(void) {
+    str s1;
+    str s2;
+
+    test("Append Free");
+
+    s1 = strFrom("foo test");
+    s2 = strFrom(" bar");
+    appendFree(&s1, &s2);
+
+    if (STRCAP(s1) != STR_CAP_DEFAULT)
+        test_fail("Append changed the capacity unnecessarily.");
+    else if (strcmp("foo test bar", STRSTR(s1)))
+        test_fail("Append did not perform correctly.");
+    else if (STRSTR(s2) != NULL)
+        test_fail("String pointer is not null after free.");
+    else if (STRLEN(s2) != 0)
+        test_fail("String length is not 0 after free.");
+    else if (STRCAP(s2) != 0)
+        test_fail("String capacity is not 0 after free.");
+    else
+        test_pass();
+
+    freeStr(&s1);
+}
+
+#define NUM_TESTS   10
 
 int main(void) {
     int i;
@@ -188,7 +237,7 @@ int main(void) {
     void (*test_funcs[NUM_TESTS])(void) = {
         from_literal_test, from_long_string_test, free_test, new_test,
         append_inplace_test, append_long_test, append_literal_test,
-        append_literal_long_test
+        append_literal_long_test, append_to_empty_test, append_free_test
     };
 
     init_tests("unit");
@@ -199,5 +248,5 @@ int main(void) {
 
     test_print_results();
 
-    return (test_fails < 255)? test_fails : 255;
+    return (test_fails < 255) ? test_fails : 255;
 }
