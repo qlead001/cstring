@@ -1,7 +1,53 @@
 #include<stdlib.h>
+#include<stdarg.h>
 #include<string.h>
 
 #include "str.h"
+
+/* * * * * * * * * * * * * * *
+ * Dynamically Sized Strings *
+ * * * * * * * * * * * * * * */
+
+/* Return an empty str with default capacity */
+str newStr(void) {
+    str s;
+
+    s.ptr = malloc(STR_CAP_DEFAULT);
+    s.len = 0;
+    s.cap = STR_CAP_DEFAULT;
+
+    *(s.ptr) = '\0';
+
+    return s;
+}
+
+/* Return a str from a string literal */
+str strFrom(const char* s) {
+    str sNew;
+
+    int len = strlen(s);
+    int cap = STR_CALC_CAP(len);
+
+    char* ptr = malloc(cap);
+
+    /* Copy s into ptr with null terminator */
+    memcpy(ptr, s, len + 1);
+
+    sNew.ptr = ptr;
+    sNew.len = len;
+    sNew.cap = cap;
+
+    return sNew;
+}
+
+/* Free ptr and set all values to 0 */
+void freeStr(str* s) {
+    free(s->ptr);
+
+    s->ptr = NULL;
+    s->len = 0;
+    s->cap = 0;
+}
 
 /* Append s2 to s1 */
 void append(str* s1, str s2) {
@@ -11,7 +57,7 @@ void append(str* s1, str s2) {
     /* Resize string if necessary */
     if (s1->cap < newCap) {
         /* Allocate in blocks of STR_CAP_DEFAULT bytes */
-        newCap = CALC_CAP(newCap);
+        newCap = STR_CALC_CAP(newCap);
 
         s1->ptr = realloc(s1->ptr, newCap);
 
@@ -33,7 +79,7 @@ void appendStr(str* s1, const char* s2) {
     /* Resize string if necessary */
     if (s1->cap < newCap) {
         /* Allocate in blocks of STR_CAP_DEFAULT bytes */
-        newCap = CALC_CAP(newCap);
+        newCap = STR_CALC_CAP(newCap);
 
         s1->ptr = realloc(s1->ptr, newCap);
 
@@ -46,43 +92,24 @@ void appendStr(str* s1, const char* s2) {
     s1->len = newLen;
 }
 
-/* Return a str from a string literal */
-str strFrom(const char* s) {
-    str sNew;
+/* Concatenate many strings separated by newlines */
+void concatln(str* s1, str* s2, ...) {
+    str* s;
 
-    int len = strlen(s);
-    int cap = CALC_CAP(len);
+    va_list args;
+    va_start(args, s2);
 
-    char* ptr = malloc(cap);
+    appendStr(s1, "\n");
+    append(s1, *s2);
+    
+    while ((s = va_arg(args, str*))) {
+        appendStr(s1, "\n");
+        append(s1, *s);
+    }
 
-    /* Copy s into ptr with null terminator */
-    memcpy(ptr, s, len + 1);
-
-    sNew.ptr = ptr;
-    sNew.len = len;
-    sNew.cap = cap;
-
-    return sNew;
+    va_end(args);
 }
 
-/* Return an empty str with default capacity */
-str newStr(void) {
-    str s;
-
-    s.ptr = malloc(STR_CAP_DEFAULT);
-    s.len = 0;
-    s.cap = STR_CAP_DEFAULT;
-
-    *(s.ptr) = '\0';
-
-    return s;
-}
-
-/* Free ptr and set all values to 0 */
-void freeStr(str* s) {
-    free(s->ptr);
-
-    s->ptr = NULL;
-    s->len = 0;
-    s->cap = 0;
-}
+/* * * * * * * * * * * * * * * * * * * *
+ * Dynamically Sized Array of Strings  *
+ * * * * * * * * * * * * * * * * * * * */
