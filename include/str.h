@@ -7,6 +7,8 @@
 
 #define MIN(a, b)   ((a) < (b) ? (a) : (b))
 
+void strErr(const char* msg)  __attribute__ ((noreturn));
+
 /* * * * * * * * * * * * * * *
  * Dynamically Sized Strings *
  * * * * * * * * * * * * * * */
@@ -47,7 +49,7 @@
  */
 #define STRCMP(s1, s2)  \
     (memcmp(STRSTR((s1)), STRSTR((s2)), \
-            MIN(STRLEN((s1)), STRLEN((s2))) + 1))
+            (MIN(STRLEN((s1)), STRLEN((s2))) + 1) * sizeof(char)))
 
 struct str {
     char* ptr;
@@ -84,8 +86,28 @@ void concatln(str* s1, str* s2, ...);
 #define ARRLEN(a)   ((a).len)
 #define ARRCAP(a)   ((a).cap)
 
+/* Pop the top off arr and free the str
+ *  Parameters:
+ *      strArr* arr
+ */
+#define popFree(arr)    (freeStr(&(pop((arr)))))
+
+/* Get the i-th str in arr or throws an error if out of bounds
+ *  Parameters:
+ *      strArr  arr
+ *      int     i
+ */
+#define GET(arr, i) \
+    (i < (arr).len ? ((arr).ptr)[i] : strErr(#i" is out of bounds"))
+
+/* Peek at the top of arr
+ *  Parameters:
+ *      strArr  arr
+ */
+#define peek(arr)   (((arr).ptr)[(arr).len - 1])
+
 struct strArr {
-    str** ptr;
+    str* ptr;
     int len;
     int cap;
 };
@@ -97,9 +119,9 @@ void dumpArr(strArr* arr);
 void freeStrArr(strArr* arr);
 
 void push(strArr* arr, str* s);
-str* peek(strArr* arr);
-str* pop(strArr* arr);
+str pop(strArr* arr);
 
-int contains(strArr arr, const char* s);
+int contains(strArr arr, str s);
+int containsStr(strArr arr, const char* s);
 
 #endif  /* str.h */
