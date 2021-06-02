@@ -1,14 +1,6 @@
 #ifndef _STR_H
 #define _STR_H  1
 
-/* * * * * * * *
- * Helper Code *
- * * * * * * * */
-
-#define MIN(a, b)   ((a) < (b) ? (a) : (b))
-
-void strErr(const char* msg)  __attribute__ ((noreturn));
-
 /* * * * * * * * * * * * * * *
  * Dynamically Sized Strings *
  * * * * * * * * * * * * * * */
@@ -90,15 +82,16 @@ void concatln(str* s1, str* s2, ...);
  *  Parameters:
  *      strArr* arr
  */
-#define popFree(arr)    (freeStr(&(pop((arr)))))
+#define popFree(arr)    (free(pop((arr)).ptr))
 
 /* Get the i-th str in arr or throws an error if out of bounds
  *  Parameters:
  *      strArr  arr
  *      int     i
  */
-#define GET(arr, i) \
-    (i < (arr).len ? ((arr).ptr)[i] : strErr(#i" is out of bounds"))
+#define GETSTR(arr, i)  \
+    ((i) < (arr).len && (i) >= 0 ? \
+     ((arr).ptr)[(i)] : strErr(#i" is out of bounds"))
 
 /* Peek at the top of arr
  *  Parameters:
@@ -123,5 +116,13 @@ str pop(strArr* arr);
 
 int contains(strArr arr, str s);
 int containsStr(strArr arr, const char* s);
+
+/* * * * * * * *
+ * Helper Code *
+ * * * * * * * */
+
+#define MIN(a, b)   ((a) < (b) ? (a) : (b))
+
+str strErr(const char* msg)  __attribute__ ((noreturn));
 
 #endif  /* str.h */

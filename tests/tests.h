@@ -87,7 +87,8 @@ void test_print_results(void) {
 
     printf("\n");
     if (test_passes == test_runs) {
-        printf(CLR_GRN "All %d tests passed\n" CLR_RST, test_runs);
+        printf(CLR_GRN "All %d tests from the %s test suite passed\n"
+               CLR_RST, test_runs, suite_name);
         return;
     }
 
@@ -96,8 +97,8 @@ void test_print_results(void) {
     if (test_fails >= test_passes)
         printf(CLR_RED);
 
-    printf("%d out of %d (%.2f%%) tests passed\n",
-            test_passes, test_runs, passes);
+    printf("%d out of %d (%.2f%%) tests from the %s test suite passed\n",
+            test_passes, test_runs, passes, suite_name);
     printf(CLR_RST);
 
     if (aborted) {

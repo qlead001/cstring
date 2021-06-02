@@ -12,8 +12,8 @@
 /* Print an error message msg to stderr and exit
  * with a failure status
  */
-void strErr(const char* msg) {
-    fprintf(stderr, "String Error: %s", msg);
+str strErr(const char* msg) {
+    fprintf(stderr, "String Error: %s\n", msg);
     exit(EXIT_FAILURE);
 }
 
@@ -105,7 +105,10 @@ void appendStr(str* s1, const char* s2) {
     s1->len = newLen;
 }
 
-/* Concatenate many strings separated by newlines */
+/* Concatenate many strings separated by newlines
+ *  Parameters:
+ *      Pass as many str* as needed followed by NULL
+ */
 void concatln(str* s1, str* s2, ...) {
     str* s;
 
@@ -169,7 +172,7 @@ void push(strArr* arr, str* s) {
     /* Resize array if necessary */
     if (newCap > arr->cap) {
         /* Allocate in blocks of STR_CAP_DEFAULT bytes */
-        newCap = STR_CALC_CAP(newCap);
+        newCap = ARR_CALC_CAP(newCap);
 
         arr->ptr = realloc(arr->ptr, newCap * sizeof(str));
 
@@ -191,13 +194,24 @@ void push(strArr* arr, str* s) {
  *
  * If the str on the top of arr is no
  * longer needed then free the returned str.
- *      freeStr(&(pop(&arr)));
+ *      free(pop(&arr).ptr);
+ * Or use the macro popFree
  */
 str pop(strArr* arr) {
     str s;
     int index = arr->len - 1;
 
+    if (index < 0) {
+        s.ptr = NULL;
+        s.len = 0;
+        s.cap = 0;
+        return s;
+    }
+
     s = (arr->ptr)[index];
+
+    if (s.ptr == NULL)
+        strErr("Popped str is null.");
 
     /* Clear str that was the top of arr */
     ((arr->ptr)[index]).ptr = NULL;
