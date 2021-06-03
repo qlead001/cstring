@@ -124,6 +124,38 @@ void new_test(void) {
     freeStr(&s);
 }
 
+void get_test(void) {
+    str s = strFrom("testx");
+
+    test("Get");
+
+    if (GETCHAR(s, 0) != 't')
+        test_fail("Get did not retrieve the first char.");
+    else if (GETCHAR(s, 1) != 'e')
+        test_fail("Get did not retrieve the second char.");
+    else if (GETCHAR(s, 4) != 'x')
+        test_fail("Get did not retrieve the last char.");
+    else {
+        GETCHAR(s, -1);
+
+        if (!strErrRaised)
+            test_fail("Get did not raise an error on index -1.");
+        else {
+            strErrRaised = 0;
+            GETCHAR(s, STRLEN(s));
+
+            if (!strErrRaised)
+                test_fail("Get did not raise an error on index = len.");
+            else {
+                strErrRaised = 0;
+                test_pass();
+            }
+        }
+    }
+
+    freeStr(&s);
+}
+
 void append_inplace_test(void) {
     str s1;
     str s2;
@@ -319,14 +351,14 @@ void concat_multi_test(void) {
     freeStr(&s4);
 }
 
-#define NUM_TESTS   13
+#define NUM_TESTS   14
 
 int main(void) {
     int i;
 
     void (*test_funcs[NUM_TESTS])(void) = {
         from_literal_test, from_long_string_test, compare_macro_test,
-        free_test, new_test, append_inplace_test, append_long_test,
+        free_test, new_test, append_inplace_test, get_test, append_long_test,
         append_literal_test, append_literal_long_test, append_to_empty_test,
         append_free_test, concat_single_test, concat_multi_test
     };

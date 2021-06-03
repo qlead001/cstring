@@ -74,11 +74,31 @@ void test_fail(const char* msg) {
     printf("\n");
 }
 
-/* Mark test as a success */
+/* Mark test as a success if there were no uncaught errors */
 void test_pass(void) {
-    printf(CLR_GRN "%s test passed\n" CLR_RST, test_name);
+    int passed = 1;
+#if defined(ERR_SILENT) || defined(ARR_ERR_SILENT)
+    if (arrErrRaised) {
+        printf(CLR_RED "Uncaught Array Error: %s\n" CLR_RST, arrErrMsg);
+        arrErrRaised = 0;
+        passed = 0;
+    }
+#endif
+#if defined(ERR_SILENT) || defined(STR_ERR_SILENT)
+    if (strErrRaised) {
+        printf(CLR_RED "Uncaught String Error: %s\n" CLR_RST, strErrMsg);
+        strErrRaised = 0;
+        passed = 0;
+    }
+#endif
+    if (passed) {
+        printf(CLR_GRN "%s test passed\n" CLR_RST, test_name);
 
-    test_passes++;
+        test_passes++;
+    } else {
+        printf(CLR_RED "%s test failed\n" CLR_RST, test_name);
+        test_fails++;
+    }
 }
 
 /* Print results of testing */

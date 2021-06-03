@@ -5,18 +5,6 @@
 
 #include "str.h"
 
-/* * * * * * * *
- * Helper Code *
- * * * * * * * */
-
-/* Print an error message msg to stderr and exit
- * with a failure status
- */
-str strErr(const char* msg) {
-    fprintf(stderr, "String Error: %s\n", msg);
-    exit(EXIT_FAILURE);
-}
-
 /* * * * * * * * * * * * * * *
  * Dynamically Sized Strings *
  * * * * * * * * * * * * * * */
@@ -29,7 +17,12 @@ str newStr(void) {
     s.len = 0;
     s.cap = STR_CAP_DEFAULT;
 
-    *(s.ptr) = '\0';
+    /* If ptr is null then malloc failed */
+    if (s.ptr == NULL)
+        strErr("Malloc failed in newStr.");
+    else
+        /* Null terminate the empty string */
+        *(s.ptr) = '\0';
 
     return s;
 }
@@ -41,10 +34,14 @@ str strFrom(const char* s) {
     int len = strlen(s);
     int cap = STR_CALC_CAP(len);
 
-    char* ptr = malloc(cap);
+    char* ptr = malloc(cap * sizeof(char));
 
-    /* Copy s into ptr with null terminator */
-    memcpy(ptr, s, (len + 1) * sizeof(char));
+    /* If ptr is null then malloc failed */
+    if (ptr == NULL)
+        strErr("Malloc failed in strFrom.");
+    else
+        /* Copy s into ptr with null terminator */
+        memcpy(ptr, s, (len + 1) * sizeof(char));
 
     sNew.ptr = ptr;
     sNew.len = len;
@@ -74,6 +71,10 @@ void append(str* s1, str s2) {
 
         s1->ptr = realloc(s1->ptr, newCap * sizeof(char));
 
+        /* If ptr is null then realloc failed */
+        if (s1->ptr == NULL)
+            strErr("Realloc failed in append.");
+
         s1->cap = newCap;
     }
     
@@ -95,6 +96,10 @@ void appendStr(str* s1, const char* s2) {
         newCap = STR_CALC_CAP(newCap);
 
         s1->ptr = realloc(s1->ptr, newCap * sizeof(char));
+
+        /* If ptr is null then realloc failed */
+        if (s1->ptr == NULL)
+            strErr("Realloc failed in appendStr.");
 
         s1->cap = newCap;
     }
@@ -138,6 +143,10 @@ strArr newStrArr(void) {
     a.len = 0;
     a.cap = ARR_CAP_DEFAULT;
 
+    /* If ptr is null then malloc failed */
+    if (a.ptr == NULL)
+        arrErr("Malloc failed in newStrArr.");
+
     return a;
 }
 
@@ -169,12 +178,20 @@ void freeStrArr(strArr* arr) {
 void push(strArr* arr, str* s) {
     int newCap = arr->len + 1;
 
+    /* Throw an error if s is null */
+    if (s == NULL || s->ptr == NULL)
+        arrErr("Cannot push a null str.");
+
     /* Resize array if necessary */
     if (newCap > arr->cap) {
         /* Allocate in blocks of STR_CAP_DEFAULT bytes */
         newCap = ARR_CALC_CAP(newCap);
 
         arr->ptr = realloc(arr->ptr, newCap * sizeof(str));
+
+        /* If ptr is null then realloc failed */
+        if (arr->ptr == NULL)
+            arrErr("Realloc failed in push.");
 
         arr->cap = newCap;
     }
@@ -201,17 +218,15 @@ str pop(strArr* arr) {
     str s;
     int index = arr->len - 1;
 
-    if (index < 0) {
-        s.ptr = NULL;
-        s.len = 0;
-        s.cap = 0;
-        return s;
-    }
+    /* Throw error if arr is empty */
+    if (index < 0)
+        return arrErr("Cannot pop from empty array.");
 
     s = (arr->ptr)[index];
 
+    /* Throw error if top of arr is null */
     if (s.ptr == NULL)
-        strErr("Popped str is null.");
+        arrErr("Popped str is null.");
 
     /* Clear str that was the top of arr */
     ((arr->ptr)[index]).ptr = NULL;
@@ -253,4 +268,58 @@ int containsStr(strArr arr, const char* s) {
             return i;
 
     return -1;
+}
+
+/* * * * * * * *
+ * Helper Code *
+ * * * * * * * */
+
+/* Print an error message msg to stderr and exit
+ * with a failure status unless ERR_SILENT or
+ * ARR_ERR_SILENT is defined. If one or both is
+ * defined the first 63 bytes of the error message
+ * is written to arrErrMsg and arrErrRaised is set to 1.
+ *
+ * Return Value:
+ *      str with all fields set to 0
+ */
+str arrErr(const char* msg) {
+#if defined(ERR_SILENT) || defined(ARR_ERR_SILENT)
+    str s;
+
+    s.ptr = NULL;
+    s.len = 0;
+    s.cap = 0;
+
+    strncpy(arrErrMsg, msg, 63);
+    arrErrMsg[63] = '\0';
+    arrErrRaised = 1;
+
+    return s;
+#else
+    fprintf(stderr, "Array Error: %s\n", msg);
+    exit(EXIT_FAILURE);
+#endif
+}
+
+/* Print an error message msg to stderr and exit
+ * with a failure status unless ERR_SILENT or
+ * STR_ERR_SILENT is defined. If one or both is
+ * defined the first 63 bytes of the error message
+ * is written to strErrMsg and strErrRaised is set to 1.
+ *
+ * Return Value:
+ *      '\0'
+ */
+char strErr(const char* msg) {
+#if defined(ERR_SILENT) || defined(STR_ERR_SILENT)
+    strncpy(strErrMsg, msg, 63);
+    strErrMsg[63] = '\0';
+    strErrRaised = 1;
+
+    return '\0';
+#else
+    fprintf(stderr, "String Error: %s\n", msg);
+    exit(EXIT_FAILURE);
+#endif
 }

@@ -92,6 +92,28 @@ void push_test(void) {
 #undef  ITERS
 }
 
+void push_null_test(void) {
+    str s;
+    strArr arr = gen_test_arr("test", "www", "foo", NULL);
+
+    test("Push Null");
+
+    s.ptr = NULL;
+    s.len = 0;
+    s.cap = 0;
+
+    push(&arr, &s);
+
+    if (!arrErrRaised)
+        test_fail("Pushing an empty str did not raise an error.");
+    else {
+        arrErrRaised = 0;
+        test_pass();
+    }
+
+    freeStrArr(&arr);
+}
+
 void push_many_test(void) {
     str s;
     strArr arr = gen_test_arr("abc", "123", "x", "test", "abc", "123", "x",
@@ -116,10 +138,7 @@ void push_many_test(void) {
         else if (ARRLEN(arr) != 17)
             test_fail("Push did not update length on capacity boundary.");
         else if (ARRCAP(arr) != 2 * ARR_CAP_DEFAULT)
-        {
-            printf("cap = %d\n", ARRCAP(arr));
             test_fail("Push did not change the capacity correctly.");
-        }
         else
             test_pass();
     }
@@ -187,8 +206,23 @@ void get_test(void) {
         test_fail("Get did not retrieve the second string.");
     else if (strcmp(STRSTR(GETSTR(arr, 2)), "xyz"))
         test_fail("Get did not retrieve the third string.");
-    else
-        test_pass();
+    else {
+        GETSTR(arr, -1);
+
+        if (!arrErrRaised)
+            test_fail("Get did not raise an error on index -1.");
+        else {
+            arrErrRaised = 0;
+            GETSTR(arr, ARRLEN(arr));
+
+            if (!arrErrRaised)
+                test_fail("Get did not raise an error on index = len.");
+            else {
+                arrErrRaised = 0;
+                test_pass();
+            }
+        }
+    }
 
     freeStrArr(&arr);
 }
@@ -209,8 +243,19 @@ void peek_test(void) {
         test_fail("Peeking twice returned different values.");
     else if (STRCMP(GETSTR(arr, 2), s1))
         test_fail("Peek changed the value of the top of arr.");
-    else
-        test_pass();
+    else {
+        ARRLEN(arr) = 0;
+        peek(arr);
+
+        if (!arrErrRaised)
+            test_fail("Peek did not raise an error on empty arr.");
+        else {
+            arrErrRaised = 0;
+            test_pass();
+        }
+
+        ARRLEN(arr) = 3;
+    }
 
     freeStrArr(&arr);
 }
@@ -244,6 +289,41 @@ void pop_test(void) {
     }
 
     freeStr(&s);
+    freeStrArr(&arr);
+}
+
+void pop_all_test(void) {
+    str s;
+    strArr arr;
+
+    test("Pop All");
+
+    arr = gen_test_arr("abc", "123", "xyz", NULL);
+
+    while (ARRLEN(arr)) {
+        s = pop(&arr);
+        freeStr(&s);
+    }
+
+    pop(&arr);
+
+    if (!arrErrRaised)
+        test_fail("Pop did not raise an error when arr was empty.");
+    else {
+        arrErrRaised = 0;
+
+        /* This is for testing, do not do this in real code */
+        ARRLEN(arr) = 1;
+        pop(&arr);
+
+        if (!arrErrRaised)
+            test_fail("Pop did not raise an error when str was null.");
+        else {
+            arrErrRaised = 0;
+            test_pass();
+        }
+    }
+
     freeStrArr(&arr);
 }
 
@@ -289,14 +369,15 @@ void contains_literal_test(void) {
     freeStrArr(&arr);
 }
 
-#define NUM_TESTS   10
+#define NUM_TESTS   12
 
 int main(void) {
     int i;
 
     void (*test_funcs[NUM_TESTS])(void) = {
-        new_test, push_test, push_many_test, dump_test, free_test,
-        get_test, peek_test, pop_test, contains_test, contains_literal_test
+        new_test, push_test, push_null_test, push_many_test, dump_test,
+        free_test, get_test, peek_test, pop_test, pop_all_test, contains_test,
+        contains_literal_test
     };
 
     init_tests("strArr unit");

@@ -19,6 +19,15 @@
 #define STRLEN(s)   ((s).len)
 #define STRCAP(s)   ((s).cap)
 
+/* Get the i-th char in str or throws an error if out of bounds
+ *  Parameters:
+ *      str s
+ *      int i
+ */
+#define GETCHAR(s, i)   \
+    ((i) < (s).len && (i) >= 0 ? \
+     ((s).ptr)[(i)] : strErr(#i" is out of bounds"))
+
 /* Append s2 to s1 then free s2
  *  Parameters:
  *      str* s1
@@ -91,13 +100,14 @@ void concatln(str* s1, str* s2, ...);
  */
 #define GETSTR(arr, i)  \
     ((i) < (arr).len && (i) >= 0 ? \
-     ((arr).ptr)[(i)] : strErr(#i" is out of bounds"))
+     ((arr).ptr)[(i)] : arrErr(#i" is out of bounds"))
 
-/* Peek at the top of arr
+/* Peek at the top of arr or throws an error if empty
  *  Parameters:
  *      strArr  arr
  */
-#define peek(arr)   (((arr).ptr)[(arr).len - 1])
+#define peek(arr)   ((arr).len > 0 ? \
+        ((arr).ptr)[(arr).len - 1] : arrErr("arr is empty"))
 
 struct strArr {
     str* ptr;
@@ -123,6 +133,26 @@ int containsStr(strArr arr, const char* s);
 
 #define MIN(a, b)   ((a) < (b) ? (a) : (b))
 
-str strErr(const char* msg)  __attribute__ ((noreturn));
+/* If errors are silent store error message in errName */
+#if defined(ERR_SILENT) || defined(ARR_ERR_SILENT) || defined(STR_ERR_SILENT)
+#endif
+
+/* If an error is set to silent provide a flag to indicate an error
+ * and a 64 byte array to store error message */
+#if defined(ERR_SILENT) || defined(ARR_ERR_SILENT)
+int arrErrRaised;
+char arrErrMsg[64];
+str arrErr(const char* msg);
+#else
+str arrErr(const char* msg)  __attribute__ ((noreturn));
+#endif
+
+#if defined(ERR_SILENT) || defined(STR_ERR_SILENT)
+int strErrRaised;
+char strErrMsg[64];
+char strErr(const char* msg);
+#else
+char strErr(const char* msg)  __attribute__ ((noreturn));
+#endif
 
 #endif  /* str.h */
