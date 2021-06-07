@@ -24,6 +24,9 @@ str newStr(void) {
         /* Null terminate the empty string */
         *(s.ptr) = '\0';
 
+    STR_DEBUG_OUT(strFrom("Generated new str"));
+    STR_STAT(s);
+
     return s;
 }
 
@@ -143,6 +146,9 @@ strArr newStrArr(void) {
     a.len = 0;
     a.cap = ARR_CAP_DEFAULT;
 
+    ARR_DEBUG_OUT(strFrom("New array"));
+    ARR_STAT(a);
+
     /* If ptr is null then malloc failed */
     if (a.ptr == NULL)
         arrErr("Malloc failed in newStrArr.");
@@ -154,20 +160,32 @@ strArr newStrArr(void) {
 void dumpArr(strArr* arr) {
     int i;
 
+    ARR_DEBUG_OUT(strFrom("Dumping array"));
+    ARR_STAT(*arr);
+
     for (i = 0; i < arr->len; i++)
         freeStr(&((arr->ptr)[i]));
 
     arr->len = 0;
+
+    ARR_DEBUG_OUT(strFrom("Dumped array"));
+    ARR_STAT(*arr);
 }
 
 /* Dump arr, free ptr and set all fields to 0 */
 void freeStrArr(strArr* arr) {
     dumpArr(arr);
 
+    ARR_DEBUG_OUT(strFrom("Freeing array"));
+    ARR_STAT(*arr);
+
     free(arr->ptr);
 
     arr->ptr = NULL;
     arr->cap = 0;
+
+    ARR_DEBUG_OUT(strFrom("Freed array"));
+    ARR_STAT(*arr);
 }
 
 /* Push s onto arr and clear fields of s 
@@ -178,6 +196,9 @@ void freeStrArr(strArr* arr) {
 void push(strArr* arr, str* s) {
     int newCap = arr->len + 1;
 
+    ARR_DEBUG_OUT(strprintf("Pushing \"%s\" to array", s->ptr));
+    ARR_STAT(*arr);
+
     /* Throw an error if s is null */
     if (s == NULL || s->ptr == NULL)
         arrErr("Cannot push a null str.");
@@ -186,6 +207,9 @@ void push(strArr* arr, str* s) {
     if (newCap > arr->cap) {
         /* Allocate in blocks of STR_CAP_DEFAULT bytes */
         newCap = ARR_CALC_CAP(newCap);
+
+        ARR_DEBUG_OUT(strprintf("Increasing array capacity from %d to %d",
+                    arr->cap, newCap));
 
         arr->ptr = realloc(arr->ptr, newCap * sizeof(str));
 
@@ -199,6 +223,9 @@ void push(strArr* arr, str* s) {
     /* Push s to end of arr and increase length */
     (arr->ptr)[arr->len] = *s;
     (arr->len)++;
+
+    ARR_DEBUG_OUT(strprintf("Pushed \"%s\" to array", s->ptr));
+    ARR_STAT(*arr);
 
     /* Clear s */
     s->ptr = NULL;
@@ -218,11 +245,16 @@ str pop(strArr* arr) {
     str s;
     int index = arr->len - 1;
 
+    ARR_DEBUG_OUT(strFrom("Popping from array"));
+    ARR_STAT(*arr);
+
     /* Throw error if arr is empty */
     if (index < 0)
         return arrErr("Cannot pop from empty array.");
 
     s = (arr->ptr)[index];
+
+    ARR_DEBUG_OUT(strprintf("Popped \"%s\"", s.ptr));
 
     /* Throw error if top of arr is null */
     if (s.ptr == NULL)
@@ -234,6 +266,8 @@ str pop(strArr* arr) {
     ((arr->ptr)[index]).cap = 0;
 
     arr->len = index;
+
+    ARR_STAT(*arr);
 
     return s;
 }
@@ -247,10 +281,15 @@ str pop(strArr* arr) {
 int contains(strArr arr, str s) {
     int i;
 
-    for (i = 0; i < arr.len; i++)
-        if (STRCMP((arr.ptr)[i], s) == 0)
-            return i;
+    ARR_DEBUG_OUT(strprintf("Searching for \"%s\" in %a", s.ptr, arr));
 
+    for (i = 0; i < arr.len; i++)
+        if (STRCMP((arr.ptr)[i], s) == 0) {
+            ARR_DEBUG_OUT(strprintf("Found \"%s\" at position %d", s.ptr, i));
+            return i;
+        }
+
+    ARR_DEBUG_OUT(strprintf("Did not find \"%s\"", s));
     return -1;
 }
 
@@ -263,15 +302,20 @@ int contains(strArr arr, str s) {
 int containsStr(strArr arr, const char* s) {
     int i;
 
-    for (i = 0; i < arr.len; i++)
-        if (strcmp(((arr.ptr)[i]).ptr, s) == 0)
-            return i;
+    ARR_DEBUG_OUT(strprintf("Searching for \"%s\" in %a", s, arr));
 
+    for (i = 0; i < arr.len; i++)
+        if (strcmp(((arr.ptr)[i]).ptr, s) == 0) {
+            ARR_DEBUG_OUT(strprintf("Found \"%s\" at position %d", s, i));
+            return i;
+        }
+
+    ARR_DEBUG_OUT(strprintf("Did not find \"%s\"", s));
     return -1;
 }
 
 /* * * * * * * *
- * Helper Code *
+ * Error Code  *
  * * * * * * * */
 
 /* Print an error message msg to stderr and exit
@@ -282,9 +326,11 @@ int containsStr(strArr arr, const char* s) {
  *
  * Return Value:
  *      str with all fields set to 0
+ * Returns a null str so it can be used in place of
+ * statements expecting str's
  */
 str arrErr(const char* msg) {
-#if defined(ERR_SILENT) || defined(ARR_ERR_SILENT)
+#if defined(ARR_ERR_SILENT) && ARR_ERR_SILENT
     str s;
 
     s.ptr = NULL;
@@ -310,9 +356,11 @@ str arrErr(const char* msg) {
  *
  * Return Value:
  *      '\0'
+ * Returns a null char so it can be used in place of
+ * statements expecting char's
  */
 char strErr(const char* msg) {
-#if defined(ERR_SILENT) || defined(STR_ERR_SILENT)
+#if defined(STR_ERR_SILENT) && STR_ERR_SILENT
     strncpy(strErrMsg, msg, 63);
     strErrMsg[63] = '\0';
     strErrRaised = 1;
@@ -322,4 +370,132 @@ char strErr(const char* msg) {
     fprintf(stderr, "String Error: %s\n", msg);
     exit(EXIT_FAILURE);
 #endif
+}
+
+/* * * * * * * *
+ * Debug Code  *
+ * * * * * * * */
+
+/* Given a strArr returns a string representation
+ * of the array using double quoted strings separated
+ * by commas and enclosed in square brackets.
+ *      E.G.    ["str1", "str2", "str3"]
+ */
+str arrToStr(strArr arr) {
+    int i;
+    str s, joiner, quote;
+
+    DISABLE_DEBUG_GENTLE();
+
+    if (arr.ptr == NULL)
+        return strFrom("[NULL]");
+    else if (arr.len <= 0)
+        return strFrom("[]");
+
+    s = strFrom("[");
+    joiner = strFrom(", ");
+    quote = strFrom("\"");
+
+    for (i = 0; i < arr.len - 1; i++) {
+        if (arr.ptr[i].ptr == NULL)
+            appendStr(&s, "(NULL)");
+        else {
+            append(&s, quote);
+            append(&s, arr.ptr[i]);
+            append(&s, quote);
+        }
+        append(&s, joiner);
+    }
+
+    if (arr.ptr[i].ptr == NULL)
+        appendStr(&s, "(NULL)");
+    else {
+        append(&s, quote);
+        append(&s, arr.ptr[i]);
+        append(&s, quote);
+    }
+    appendStr(&s, "]");
+
+    freeStr(&joiner);
+    freeStr(&quote);
+
+    REVERT_DEBUG();
+
+    return s;
+}
+
+str strprintf(const char *format, ...) {
+    char *sPos, *ePos, *searchPos;
+    int len, newCap, i;
+    str sArr, s, fmt;
+    strArr strs;
+
+    va_list args;
+
+    DISABLE_DEBUG_GENTLE();
+
+    strs = newStrArr();
+    s = newStr();
+    fmt = strFrom(format);
+
+    len = 0;
+
+    searchPos = sPos = fmt.ptr;
+
+    va_start(args, format);
+
+    while ((ePos = memchr(searchPos, '%', fmt.len - (searchPos - fmt.ptr)))) {
+        if (ePos[1] == 'a') {
+            ePos[0] = '\0';
+            len += vsnprintf(NULL, 0, sPos, args);
+            searchPos = sPos = ePos + 2;
+            ePos[0] = '%';
+            sArr = arrToStr(va_arg(args, strArr));
+            len += sArr.len;
+            push(&strs, &sArr);
+        } else
+            searchPos = ePos + 1;
+    }
+    len += vsnprintf(NULL, 0, sPos, args);
+
+    va_end(args);
+
+    newCap = len + 1;
+
+    /* Allocate in blocks of STR_CAP_DEFAULT bytes */
+    newCap = STR_CALC_CAP(newCap);
+
+    s.ptr = realloc(s.ptr, newCap * sizeof(char));
+
+    /* If ptr is null then realloc failed */
+    if (s.ptr == NULL)
+        strErr("Realloc failed in append.");
+
+    s.cap = newCap;
+
+    searchPos = sPos = fmt.ptr;
+
+    va_start(args, format);
+
+    i = 0;
+    while ((ePos = memchr(searchPos, '%', fmt.len - (searchPos - fmt.ptr)))) {
+        if (ePos[1] == 'a') {
+            ePos[0] = '\0';
+            s.len += vsprintf(s.ptr + s.len, sPos, args);
+            searchPos = sPos = ePos + 2;
+            ePos[0] = '%';
+            va_arg(args, strArr);
+            append(&s, strs.ptr[i++]);
+        } else
+            searchPos = ePos + 1;
+    }
+    s.len += vsprintf(s.ptr + s.len, sPos, args);
+
+    free(strs.ptr);
+    freeStr(&fmt);
+
+    va_end(args);
+
+    REVERT_DEBUG();
+    return s;
 }
