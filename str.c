@@ -123,10 +123,13 @@ void concatln(str* s1, str* s2, ...) {
     va_list args;
     va_start(args, s2);
 
-    appendStr(s1, "\n");
+    if (s1->len > 0)
+        appendStr(s1, "\n");
     append(s1, *s2);
     
     while ((s = va_arg(args, str*))) {
+        if (s->len <= 0)
+            continue;
         appendStr(s1, "\n");
         append(s1, *s);
     }
