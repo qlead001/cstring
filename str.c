@@ -503,7 +503,7 @@ str strprintf(const char *format, ...) {
     }
     s.len += vsprintf(s.ptr + s.len, sPos, args);
 
-    free(strs.ptr);
+    freeStrArr(&strs);
     freeStr(&fmt);
 
     va_end(args);

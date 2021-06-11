@@ -335,23 +335,30 @@ void pop_all_test(void) {
 
 void contains_test(void) {
     strArr arr;
+    str s1, s2, s3, s4;
 
     test("Contains");
 
     arr = gen_test_arr("abc", "123", "xyz", NULL);
 
-    if (contains(arr, strFrom("abc")) != 0)
+    s1 = strFrom("abc");
+    s2 = strFrom("xyz");
+    s3 = strFrom("1234");
+    s4 = strFrom("123");
+
+    if (contains(arr, s1) != 0)
         test_fail("Contains failed to find first entry.");
-    else if (contains(arr, strFrom("xyz")) != 2)
+    else if (contains(arr, s2) != 2)
         test_fail("Contains failed to find third/last entry.");
-    else if (contains(arr, strFrom("1234")) != -1)
+    else if (contains(arr, s3) != -1)
         test_fail("Contains did not return -1 for a str not in arr.");
-    else if (contains(arr, strFrom("123")) != 1)
+    else if (contains(arr, s4) != 1)
         test_fail("Contains failed to find second entry.");
     else
         test_pass();
 
     freeStrArr(&arr);
+    freeStr(&s1); freeStr(&s2); freeStr(&s3); freeStr(&s4);
 }
 
 void contains_literal_test(void) {

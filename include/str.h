@@ -202,22 +202,22 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(ARR_DEBUG) && ARR_DEBUG
 #   define  ARR_DEBUG_OUT(msg) do { \
-        if (dbg_disabled) { free(msg.ptr); break; } \
+        dbg_temp_str = msg; \
+        if (dbg_disabled) { free(dbg_temp_str.ptr); break; } \
         DISABLE_DEBUG(); \
         fputs(DEBUG_START, ARR_DEBUG_FD); \
-        fputs(msg.ptr, ARR_DEBUG_FD); \
+        fputs(dbg_temp_str.ptr, ARR_DEBUG_FD); \
         fputs(DEBUG_END "\n", ARR_DEBUG_FD); \
-        free(msg.ptr); \
+        free(dbg_temp_str.ptr); \
         REVERT_DEBUG(); \
         } while(0)
-    str arr_stat_str;
 #   define  ARR_STAT(arr)   do { \
         if (dbg_disabled) break; \
         DISABLE_DEBUG(); \
-        arr_stat_str = arrToStr((arr)); \
+        dbg_temp_str = arrToStr((arr)); \
         fprintf(ARR_DEBUG_FD, "\t" DEBUG_START "Arr: %s, Len: %d, Cap: %d" \
-                DEBUG_END "\n", arr_stat_str.ptr, (arr).len, (arr).cap); \
-        freeStr(&arr_stat_str); \
+                DEBUG_END "\n", dbg_temp_str.ptr, (arr).len, (arr).cap); \
+        freeStr(&dbg_temp_str); \
         REVERT_DEBUG(); \
         } while(0)
 #else
@@ -232,12 +232,13 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(STR_DEBUG) && STR_DEBUG
 #   define  STR_DEBUG_OUT(msg) do { \
-        if (dbg_disabled) { free(msg.ptr); break; } \
+        dbg_temp_str = msg; \
+        if (dbg_disabled) { free(dbg_temp_str.ptr); break; } \
         DISABLE_DEBUG(); \
         fputs(DEBUG_START, STR_DEBUG_FD); \
-        fputs(msg.ptr, STR_DEBUG_FD); \
+        fputs(dbg_temp_str.ptr, STR_DEBUG_FD); \
         fputs(DEBUG_END "\n", STR_DEBUG_FD); \
-        free(msg.ptr); \
+        free(dbg_temp_str.ptr); \
         REVERT_DEBUG(); \
         } while(0)
 #   define  STR_STAT(str)   do { \
@@ -254,6 +255,9 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if (defined(ARR_DEBUG) && ARR_DEBUG) || (defined(STR_DEBUG) && STR_DEBUG)
 #   include<limits.h>
+
+    /* Temporary storage for macros to use before freeing */
+    str dbg_temp_str;
 
 #   ifndef  DEBUG_STACK_LEN
 #       define  DEBUG_STACK_LEN 32
