@@ -28,6 +28,10 @@
 
 #define MIN(a, b)   ((a) < (b) ? (a) : (b))
 
+#define BITPACK(bits, val, pos) ((bits) = (val) ? \
+        ((bits) | (1<<(pos))) : ((bits) & ~(1<<(pos))))
+#define BITUNPACK(bits, pos)   (((bits) & (1<<(pos))) >> (pos))
+
 /* * * * * * * * * * * * * * *
  * Dynamically Sized Strings *
  * * * * * * * * * * * * * * */
@@ -198,8 +202,8 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(ARR_DEBUG) && ARR_DEBUG
 #   define  ARR_DEBUG_OUT(msg) do { \
-        if (debugging_disabled) break; \
-        DISABLE_DEBUG_GENTLE(); \
+        if (dbg_disabled) break; \
+        DISABLE_DEBUG(); \
         fputs(DEBUG_START, ARR_DEBUG_FD); \
         fputs(msg.ptr, ARR_DEBUG_FD); \
         fputs(DEBUG_END "\n", ARR_DEBUG_FD); \
@@ -208,8 +212,8 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
         } while(0)
     str arr_stat_str;
 #   define  ARR_STAT(arr)   do { \
-        if (debugging_disabled) break; \
-        DISABLE_DEBUG_GENTLE(); \
+        if (dbg_disabled) break; \
+        DISABLE_DEBUG(); \
         arr_stat_str = arrToStr((arr)); \
         fprintf(ARR_DEBUG_FD, "\t" DEBUG_START "Arr: %s, Len: %d, Cap: %d" \
                 DEBUG_END "\n", arr_stat_str.ptr, (arr).len, (arr).cap); \
@@ -228,8 +232,8 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(STR_DEBUG) && STR_DEBUG
 #   define  STR_DEBUG_OUT(msg) do { \
-        if (debugging_disabled) break; \
-        DISABLE_DEBUG_GENTLE(); \
+        if (dbg_disabled) break; \
+        DISABLE_DEBUG(); \
         fputs(DEBUG_START, STR_DEBUG_FD); \
         fputs(msg.ptr, STR_DEBUG_FD); \
         fputs(DEBUG_END "\n", STR_DEBUG_FD); \
@@ -237,8 +241,8 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
         REVERT_DEBUG(); \
         } while(0)
 #   define  STR_STAT(str)   do { \
-        if (debugging_disabled) break; \
-        DISABLE_DEBUG_GENTLE(); \
+        if (dbg_disabled) break; \
+        DISABLE_DEBUG(); \
         fprintf(STR_DEBUG_FD, "\t" DEBUG_START "Str: \"%s\", Len: %d, Cap: %d" \
                 DEBUG_END "\n", (str).ptr, (str).len, (str).cap); \
         REVERT_DEBUG(); \
@@ -249,31 +253,43 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 #endif
 
 #if (defined(ARR_DEBUG) && ARR_DEBUG) || (defined(STR_DEBUG) && STR_DEBUG)
-    int debugging_disabled, old_debugging_disabled;
+#   include<limits.h>
+
+#   ifndef  DEBUG_STACK_LEN
+#       define  DEBUG_STACK_LEN 32
+#   endif
+
+#   define  DBG_INDEX   ((dbg_curr / CHAR_BIT) + dbg_start) % DEBUG_STACK_LEN
+    char dbg_disabled;
+    char dbg_stack[DEBUG_STACK_LEN];
+    int dbg_curr, dbg_start;
+
 #   define  ENABLE_DEBUG()  do { \
-        old_debugging_disabled = 0; \
-        debugging_disabled = 0; \
-        } while(0)
-#   define  ENABLE_DEBUG_GENTLE()   do { \
-        if (!debugging_disabled) break; \
-        old_debugging_disabled = debugging_disabled; \
-        debugging_disabled = 0; \
+        if (dbg_curr >= DEBUG_STACK_LEN * CHAR_BIT - 1) { \
+            dbg_start = (dbg_start + 1) % DEBUG_STACK_LEN; \
+        } else { \
+            dbg_curr++; \
+        } \
+        BITPACK(dbg_stack[DBG_INDEX], dbg_disabled, dbg_curr % CHAR_BIT); \
+        dbg_disabled = 0; \
         } while(0)
 #   define  DISABLE_DEBUG() do { \
-        old_debugging_disabled = 1; \
-        debugging_disabled = 1; \
+        if (dbg_curr >= DEBUG_STACK_LEN * CHAR_BIT - 1) { \
+            dbg_start = (dbg_start + 1) % DEBUG_STACK_LEN; \
+        } else { \
+            dbg_curr++; \
+        } \
+        BITPACK(dbg_stack[DBG_INDEX], dbg_disabled, dbg_curr % CHAR_BIT); \
+        dbg_disabled = 1; \
         } while(0)
-#   define  DISABLE_DEBUG_GENTLE()  do { \
-        if (debugging_disabled) break; \
-        old_debugging_disabled = debugging_disabled; \
-        debugging_disabled = 1; \
+#   define  REVERT_DEBUG()  do { \
+        if (dbg_curr < 0) break; \
+        dbg_disabled = BITUNPACK(dbg_stack[DBG_INDEX], dbg_curr % CHAR_BIT); \
+        dbg_curr--; \
         } while(0)
-#   define  REVERT_DEBUG()  (debugging_disabled = old_debugging_disabled)
 #else
 #   define  ENABLE_DEBUG()  do {} while(0)
-#   define  ENABLE_DEBUG_GENTLE()   do {} while(0)
 #   define  DISABLE_DEBUG() do {} while(0)
-#   define  DISABLE_DEBUG_GENTLE()  do {} while(0)
 #   define  REVERT_DEBUG()  do {} while(0)
 #endif
 

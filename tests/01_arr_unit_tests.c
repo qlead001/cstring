@@ -15,10 +15,14 @@
 strArr gen_test_arr(const char* s1, ...) {
     char* c;
     str s;
-    strArr arr = newStrArr();
+    strArr arr;
 
     va_list args;
     va_start(args, s1);
+
+    DISABLE_DEBUG();
+
+    arr = newStrArr();
 
     s = strFrom(s1);
     push(&arr, &s);
@@ -29,6 +33,8 @@ strArr gen_test_arr(const char* s1, ...) {
     }
 
     va_end(args);
+
+    REVERT_DEBUG();
 
     return arr;
 }

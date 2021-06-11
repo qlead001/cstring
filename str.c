@@ -5,6 +5,10 @@
 
 #include "str.h"
 
+#if (defined(ARR_DEBUG) && ARR_DEBUG) || (defined(STR_DEBUG) && STR_DEBUG)
+    int dbg_curr = -1;
+#endif
+
 /* * * * * * * * * * * * * * *
  * Dynamically Sized Strings *
  * * * * * * * * * * * * * * */
@@ -388,12 +392,17 @@ str arrToStr(strArr arr) {
     int i;
     str s, joiner, quote;
 
-    DISABLE_DEBUG_GENTLE();
+    DISABLE_DEBUG();
 
-    if (arr.ptr == NULL)
-        return strFrom("[NULL]");
-    else if (arr.len <= 0)
-        return strFrom("[]");
+    if (arr.ptr == NULL) {
+        s = strFrom("[NULL]");
+        REVERT_DEBUG();
+        return s;
+    } else if (arr.len <= 0) {
+        s = strFrom("[]");
+        REVERT_DEBUG();
+        return s;
+    }
 
     s = strFrom("[");
     joiner = strFrom(", ");
@@ -435,7 +444,7 @@ str strprintf(const char *format, ...) {
 
     va_list args;
 
-    DISABLE_DEBUG_GENTLE();
+    DISABLE_DEBUG();
 
     strs = newStrArr();
     s = newStr();
