@@ -202,7 +202,7 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(ARR_DEBUG) && ARR_DEBUG
 #   define  ARR_DEBUG_OUT(msg) do { \
-        if (dbg_disabled) break; \
+        if (dbg_disabled) { free(msg.ptr); break; } \
         DISABLE_DEBUG(); \
         fputs(DEBUG_START, ARR_DEBUG_FD); \
         fputs(msg.ptr, ARR_DEBUG_FD); \
@@ -232,7 +232,7 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 
 #if defined(STR_DEBUG) && STR_DEBUG
 #   define  STR_DEBUG_OUT(msg) do { \
-        if (dbg_disabled) break; \
+        if (dbg_disabled) { free(msg.ptr); break; } \
         DISABLE_DEBUG(); \
         fputs(DEBUG_START, STR_DEBUG_FD); \
         fputs(msg.ptr, STR_DEBUG_FD); \
@@ -292,9 +292,6 @@ char strErr(const char* msg)  __attribute__ ((noreturn));
 #   define  DISABLE_DEBUG() do {} while(0)
 #   define  REVERT_DEBUG()  do {} while(0)
 #endif
-
-#define printArr(arr)       (puts(arrToStr((arr)).ptr))
-#define fprintArr(f, arr)   (fputs(arrToStr((arr)).ptr, (f)))
 
 str arrToStr(strArr arr);
 str strprintf(const char *format, ...);
