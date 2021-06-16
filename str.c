@@ -127,14 +127,21 @@ void concatln(str* s1, str* s2, ...) {
     va_list args;
     va_start(args, s2);
 
-    if (s1->len > 0)
-        appendStr(s1, "\n");
-    append(s1, *s2);
+    /* Only concatenate if s2 is not empty */
+    if (s2->len > 0) {
+        /* Only append a newline if s1 is not empty */
+        if (s1->len > 0)
+            appendStr(s1, "\n");
+        append(s1, *s2);
+    }
     
     while ((s = va_arg(args, str*))) {
+        /* Skip empty strings */
         if (s->len <= 0)
             continue;
-        appendStr(s1, "\n");
+        /* Only append a newline if s1 is not empty */
+        if (s1->len > 0)
+            appendStr(s1, "\n");
         append(s1, *s);
     }
 
